@@ -1,0 +1,32 @@
+문제 4 — 연산 선택 + 출력 레지스터
+
+▎ IP 설명: 2비트 op에 따라 4비트 a, b의 연산 결과 r을 고르고(조합), 그 결과를 clk 상승 에지마다 y에 저장한다.
+▎
+▎ | op  | r                                     |
+▎ |-----|---------------------------------------|
+▎ | 00  | a + b                                 |
+▎ | 01  | a − b                                 |
+▎ | 10  | a와 b의 비트별 AND                    |
+▎ | 11  | a를 왼쪽으로 1칸 시프트 (빈 자리는 0) |
+
+module alu_reg (
+  input            clk,
+  input      [1:0] op,
+  input      [3:0] a, b,
+  output reg [3:0] y
+);
+  reg [3:0] r;
+
+  always @(*) begin
+    case (op)
+      2'b00 : r = a + b;
+      2'b01 : r = a - b;
+      2'b10 : r = a & b;
+      2'b11 : r = a << 1'b1;
+      default : r = 4'd0;
+    endcase
+  end
+
+  always @(posedge clk)
+    y <= r;
+endmodule
