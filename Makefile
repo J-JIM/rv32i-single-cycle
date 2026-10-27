@@ -10,9 +10,9 @@ VVP      ?= vvp
 IFLAGS   ?=
 
 RTL := $(shell find rtl -name '*.v' | sort)
-TBS := $(patsubst %_tb,%,$(notdir $(basename $(wildcard tb/*/*_tb.v))))
+TBS := $(patsubst %_tb,%,$(notdir $(basename $(wildcard tb/*_tb.v tb/*/*_tb.v))))
 
-vpath %_tb.v tb/alu tb/control tb/memory tb/register
+vpath %_tb.v tb/alu tb/control tb/memory tb/register tb
 
 .PHONY: all list clean $(addprefix run-,$(TBS))
 
