@@ -3,7 +3,7 @@ module counter_tb;
     wire [31:0]pc;
     reg clk, reset;
     integer i,fails;
-    counter uut(clk, reset, pc);
+    programcounter uut(clk, reset, pc);
 
     task check(input c, rst);
         reg [31:0]tmp;
