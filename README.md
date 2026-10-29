@@ -10,7 +10,7 @@
 rtl/        DUT (설계) — 한 모듈 = 한 파일
   alu/        halfadder fulladder CRA32 sub32 alu
   control/    control alu_control
-  memory/     signextend ismem dmem
+  memory/     signextend immgen ismem dmem
   register/   Dlatch DFF register Decoder532 parallel32 programcounter(PC) registerfile
   top.v       ← 조립(배선). 부품 8개 + MUX 2개, 전부 명시적 포트 연결 (2026-10-26)
 tb/         테스트벤치 (rtl 과 같은 하위 폴더, 이름은 <모듈>_tb.v)
@@ -21,6 +21,7 @@ archive/    옛 버전·연습 — 코드 경로에 없음
   CRA32_v2_4비트블록판/   CRA4×8 방식의 CRA32_v2 + 그 tb (비교 후 FA 직결 방식 채택)
   미완성_stub/            register32.v (빈 모듈)
 Makefile
+CLAUDE.md   작업 규칙 (Mac·노트북 공통) — 하드웨어·커밋·답변 방식
 ```
 
 ## 실행
@@ -54,20 +55,25 @@ make clean
 
 - 부품별 검증 풀 사이클(tb 작성 → 엣지 대본 → fault 주입 → 통과) **12회 완주**.
 - tb 15개가 `tb/` 에 있음. **`CRA32.v`(FA 직결)만 전용 tb 가 없다** — `CRA32_tb.v` 는 v2(4비트 블록판)용이라 archive 에 있음. alu_tb·sub32_tb 가 간접 검증.
-- `make all` → **`success tb` 7개 통과**, 에러 1건.
+- ⚠️ **현재 `make all` 은 전부 실패한다** — `rtl/memory/immgen.v`(뼈대만)와 `rtl/control/control.v:15`(localparam 구두점)가 컴파일되지 않는데, `Makefile` 이 `rtl` 전체를 긁기 때문에 tb 하나도 못 짓는다. 마지막 정상 상태는 `ad0d4c3`.
 - 참고 노트(옵시디언): `Verilog_함정_체크리스트` · `CPU_부품_지도` · `Verilog_재발_추적` · 각 `*_구현_정리`.
 
-### 알려진 미완 (2026-10-26)
+### 알려진 미완 (2026-10-29)
 
 | | 내용 |
 |---|---|
-| 🔴 `tb/register/counter_tb.v` | `counter` → `programcounter` 개명 후 tb 미수정 → `Unknown module type: counter` 로 빌드 실패 |
+| 🔴 `rtl/control/control.v:15` | `localparam` 목록이 `addi` 에서 **세미콜론**으로 끊겨 16~19행(`lui`·`auipc`·`jal`·`jalr`)이 선언 밖으로 빠짐 → syntax error |
+| 🔴 `rtl/memory/immgen.v` | 뼈대만. `case` 가지에 실행할 문장이 없고(주석뿐), 포트는 `Imm` 인데 대입은 `imm` — 대소문자 불일치 |
+| 🟡 `rtl/top.v` | **출력 포트가 없다.** 시뮬은 `uut.regfile.slot[5]` 로 내부를 들여다보지만 합성기엔 그 창이 없어 **CPU 전체가 최적화로 제거된다** → FPGA 전에 디버그 읽기 포트가 필요 |
+| 🟡 `tb/control/control_tb.v` | `addi`(`0010011`) 행이 없다 — 그 가지의 근거가 `top_tb` 의 `30` 하나뿐 |
 | 🟡 `tb/register/registerfile_tb.v` | `wr_en=0` 케이스가 전부 **빈 슬롯**을 겨눠 `X !== X` 로 통과 — **보존 기능 미검증**. 값이 든 슬롯에 wr=0 케이스 한 줄 필요 |
-| 🟡 `rtl/top.v` | 컴파일은 통과하나 **x6·x7 이 초기화 안 됨** → `add` 결과가 X. top 에 출력 포트가 없어 `top_tb.v` 도 필요 |
 | 🟡 `branch` · `zero` | beq 용. `programcounter` 에 분기 입력 포트가 없어 미연결 |
+| 🟡 `rtl/memory/dmem.v:4` | 주석의 "조합 논리 사용" 은 틀림 — 읽기만 조합이고 쓰기는 `always @(posedge clk)` 순차 |
 
 ## 다음
 
-1. `top_tb.v` — x6·x7 에 값 심고 한 사이클 → **`add` 한 명령이 돈다**
-2. addi / lw / sw / beq 확장 → 컴파일한 C 프로그램 실행
-3. FPGA 합성 (Vivado) → 파이프라인 (컴퓨터구조 수업 진도와 함께)
+1. 🔴 **빌드 복구** — `control.v` 구두점 + `immgen.v` case 가지 → `make all` 되살리기
+2. **beq** — ImmGen(I·S·SB) · 분기 Add · `PCSrc = branch & zero` · PC 에 분기 입력 포트
+3. **FPGA (PYNQ-Z2)** — `top.v` 에 디버그 읽기 포트 → Vivado 합성·타이밍 리포트(CRA32 캐리 체인 확인) → 보드
+   - ⚠️ 합성은 **x86 리눅스 노트북에서만**. 디바이스는 **Zynq-7000** — 자세한 건 `CLAUDE.md`
+4. 컴파일한 C 프로그램 실행 → 커버리지 → 파이프라인 (컴퓨터구조 수업 진도와 함께)
