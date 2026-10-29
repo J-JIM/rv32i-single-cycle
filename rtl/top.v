@@ -131,6 +131,14 @@ module top(input clk, reset);
     // 10. mux2 — 레지스터에 써 넣을 값: 메모리에서 읽은 것이냐 ALU 결과냐
     assign wb = MemtoReg ? memdata : alu_s;
 
+    /*
+    // 11. immgen - opcode 별 R, I, S, U, SB, type 뽑아준다.
+    immgen immedgen(
+        .inst ();
+        .ImmSrc ();
+        .Imm ();
 
+    );
+    */
 endmodule
 `default_nettype wire
