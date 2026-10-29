@@ -13,9 +13,13 @@ module control(input [6:0]opcode, output reg branch, MemRead, MemWrite, AluSrc, 
                sw       = 7'b0100011,
                beq      = 7'b1100011,
                addi     = 7'b0010011;
-
+               lui      = 7'b0110111;
+               auipc    = 7'b0010111;
+               jal      = 7'b1101111;
+               jalr     = 7'b1100111;
     //input opcode의 변함에 따른 값 수정받는 코드.
     //case opcode에 따른 값을 변화 시켜주는 것이다.
+    
     always @(*) begin   //combinational circuit
         case(opcode)
             default :   begin AluSrc = 0; MemtoReg = 0; RegWrite =0; MemRead = 0; MemWrite = 0; branch = 0; Aluop =2'b00; end   //예약어 이름표.
